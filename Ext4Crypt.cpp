@@ -602,6 +602,8 @@ bool e4crypt_prepare_user_storage(const char* volume_uuid, userid_t user_id, int
         auto misc_de_path = android::vold::BuildDataMiscDePath(user_id);
         auto user_de_path = android::vold::BuildDataUserDePath(volume_uuid, user_id);
 
+	prepare_dir(android::vold::BuildDataPath("") + "/vendor_de", 0771, 0, 0);
+
         if (!prepare_dir(system_legacy_path, 0700, AID_SYSTEM, AID_SYSTEM)) return false;
 #if MANAGE_MISC_DIRS
         if (!prepare_dir(misc_legacy_path, 0750, multiuser_get_uid(user_id, AID_SYSTEM),
