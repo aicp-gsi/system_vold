@@ -41,9 +41,8 @@ static const char* kMkfsPath = "/system/bin/mkfs.exfat";
 static const char* kFsckPath = "/system/bin/fsck.exfat";
 
 bool IsSupported() {
-    return access(kMkfsPath, X_OK) == 0
-            && access(kFsckPath, X_OK) == 0
-            && IsFilesystemSupported("exfat");
+    return access(kMkfsPath, X_OK) == 0 && access(kFsckPath, X_OK) == 0 &&
+           (IsFilesystemSupported("exfat") || IsFilesystemSupported("sdfat"));
 }
 
 status_t Check(const std::string& source) {
@@ -80,6 +79,18 @@ status_t Mount(const std::string& source, const std::string& target, bool ro,
         SLOGE("%s appears to be a read only filesystem - retrying mount RO", c_source);
         flags |= MS_RDONLY;
         rc = mount(c_source, c_target, CONFIG_EXFAT_DRIVER, flags, mountData);
+
+    const char *fs = "exfat";
+    if(IsFilesystemSupported("sdfat"))
+        fs = "sdfat";
+    if (mount(source.c_str(), target.c_str(), fs, mountFlags, mountData.c_str()) == 0) {
+        return 0;
+    }
+
+    PLOG(ERROR) << "Mount failed; attempting read-only";
+    mountFlags |= MS_RDONLY;
+    if (mount(source.c_str(), target.c_str(), fs, mountFlags, mountData.c_str()) == 0) {
+        return 0;
     }
 
     return rc;
